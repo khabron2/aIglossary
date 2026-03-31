@@ -67,21 +67,59 @@ const MOCK_GLOSSARY: GlossaryItem[] = [
 
 export default function App() {
   const [isStandalone, setIsStandalone] = useState(true);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [activeView, setActiveView] = useState<View>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    // Detectar si la app está en modo "Añadida a la pantalla de inicio"
+    // 1. Detectar modo Standalone
     const isViewStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone 
-      || document.referrer.includes('android-app://');
-    
+      || (window.navigator as any).standalone;
     setIsStandalone(!!isViewStandalone);
+
+    // 2. Capturar evento de instalación (Android/Chrome)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+
+    // 3. Generar Manifiesto Dinámico (Truco para GAS)
+    const manifest = {
+      "name": "AI Glossary Pro",
+      "short_name": "AI Glossary",
+      "start_url": ".",
+      "display": "standalone",
+      "background_color": "#0f172a",
+      "theme_color": "#0f172a",
+      "icons": [{
+        "src": "https://api.dicebear.com/7.x/bottts/svg?seed=AI",
+        "sizes": "512x512",
+        "type": "image/svg+xml"
+      }]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    document.head.appendChild(link);
   }, []);
 
   // --- Handlers ---
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setDeferredPrompt(null);
+    } else {
+      // Si no hay prompt nativo (iOS), mostrar guía manual
+      setShowInstallGuide(true);
+    }
+  };
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -151,8 +189,12 @@ export default function App() {
     <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-violet-500/30 overflow-hidden h-screen fixed inset-0">
       <div className="max-w-md mx-auto relative h-full flex flex-col">
         {!isStandalone && (
-          <div className="bg-violet-600 p-3 text-center text-[10px] font-black uppercase tracking-widest animate-pulse z-[70]">
-            Para pantalla completa: Añade esta App a tu escritorio
+          <div 
+            onClick={handleInstall}
+            className="bg-violet-600 p-4 text-center cursor-pointer flex items-center justify-center gap-3 z-[70] shadow-xl"
+          >
+            <div className="bg-white/20 p-1 rounded-lg"><Plus size={16} /></div>
+            <span className="text-[10px] font-black uppercase tracking-widest">Instalar App en Pantalla Completa</span>
           </div>
         )}
         <Header />
@@ -189,6 +231,46 @@ export default function App() {
               <CheckCircle2 size={18} />
               {toast}
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Guía de Instalación iOS */}
+        <AnimatePresence>
+          {showInstallGuide && (
+            <div className="fixed inset-0 z-[110] flex items-end justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowInstallGuide(false)}
+                className="absolute inset-0 bg-slate-950/90 backdrop-blur-md"
+              />
+              <motion.div 
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                className="relative w-full bg-slate-900 rounded-[2.5rem] p-8 text-center space-y-6 border border-white/10"
+              >
+                <div className="w-16 h-1 bg-slate-800 rounded-full mx-auto mb-2" />
+                <h2 className="text-xl font-black">Instalar en tu iPhone</h2>
+                <div className="space-y-6 text-left">
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-blue-400 font-bold">1</div>
+                    <p className="text-sm">Toca el botón de <span className="bg-white/10 px-2 py-1 rounded font-bold">Compartir</span> abajo en Safari.</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center text-blue-400 font-bold">2</div>
+                    <p className="text-sm">Desliza hacia abajo y busca <span className="font-bold text-violet-400">"Añadir a la pantalla de inicio"</span>.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowInstallGuide(false)}
+                  className="w-full bg-violet-600 py-4 rounded-2xl font-black uppercase tracking-widest text-sm"
+                >
+                  Entendido
+                </button>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>
 
