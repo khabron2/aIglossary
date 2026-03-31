@@ -186,12 +186,12 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-violet-500/30 overflow-hidden h-screen fixed inset-0">
-      <div className="max-w-md mx-auto relative h-full flex flex-col">
+    <div className="h-full w-full bg-[#0f172a] text-slate-200 font-sans selection:bg-violet-500/30 flex flex-col overflow-hidden fixed inset-0">
+      <div className="max-w-md mx-auto relative h-full w-full flex flex-col overflow-hidden">
         {!isStandalone && (
           <div 
             onClick={handleInstall}
-            className="bg-violet-600 p-4 text-center cursor-pointer flex items-center justify-center gap-3 z-[70] shadow-xl"
+            className="bg-violet-600 p-4 text-center cursor-pointer flex items-center justify-center gap-3 z-[70] shadow-xl shrink-0"
           >
             <div className="bg-white/20 p-1 rounded-lg"><Plus size={16} /></div>
             <span className="text-[10px] font-black uppercase tracking-widest">Instalar App en Pantalla Completa</span>
@@ -200,7 +200,7 @@ export default function App() {
         <Header />
         {activeView !== 'home' && <SearchBar />}
 
-        <main className="flex-1 px-6 pb-32">
+        <main id="main-content" className="flex-1 overflow-y-auto px-6 pb-32 space-y-4 scrolling-touch">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}

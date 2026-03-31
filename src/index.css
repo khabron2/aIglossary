@@ -19,3 +19,7 @@ body {
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+.scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}

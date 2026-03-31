@@ -20,11 +20,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-      /* Bloquear el scroll elástico que muestra la barra de direcciones */
+      /* Permitir scroll interno pero evitar el rebote del navegador */
       html, body {
         overflow: hidden;
         height: 100%;
-        position: fixed;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background-color: #0f172a;
+      }
+      #root {
+        height: 100%;
         width: 100%;
       }
     </style>
