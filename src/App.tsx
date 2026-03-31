@@ -66,10 +66,20 @@ const MOCK_GLOSSARY: GlossaryItem[] = [
 ];
 
 export default function App() {
+  const [isStandalone, setIsStandalone] = useState(true);
   const [activeView, setActiveView] = useState<View>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Detectar si la app está en modo "Añadida a la pantalla de inicio"
+    const isViewStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone 
+      || document.referrer.includes('android-app://');
+    
+    setIsStandalone(!!isViewStandalone);
+  }, []);
 
   // --- Handlers ---
   const showToast = (msg: string) => {
@@ -138,8 +148,13 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-violet-500/30">
-      <div className="max-w-md mx-auto relative min-h-screen flex flex-col">
+    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-violet-500/30 overflow-hidden h-screen fixed inset-0">
+      <div className="max-w-md mx-auto relative h-full flex flex-col">
+        {!isStandalone && (
+          <div className="bg-violet-600 p-3 text-center text-[10px] font-black uppercase tracking-widest animate-pulse z-[70]">
+            Para pantalla completa: Añade esta App a tu escritorio
+          </div>
+        )}
         <Header />
         {activeView !== 'home' && <SearchBar />}
 
